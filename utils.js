@@ -1,5 +1,8 @@
 const Data = require('./models/data');
 
+const NodeCache = require('node-cache');
+const cache = new NodeCache();
+
 function makeID(length) {
     let result = '';
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -14,8 +17,22 @@ function makeID(length) {
 
 async function findOrigin(id) {
     try {
+        // Check if the URL is in the cache
+        const cachedUrl = cache.get(id);
+        if (cachedUrl) {
+            return cachedUrl; // Return the URL from the cache
+        }
+
+        // If not found in cache, query the database
         const record = await Data.findOne({ where: { id: id } });
-        return record ? record.url : null;
+        const url = record ? record.url : null;
+
+        // Store the result in the cache before returning
+        if (url) {
+            cache.set(id, url);
+        }
+
+        return url;
     } catch (err) {
         throw new Error(err.message);
     }
@@ -24,6 +41,8 @@ async function findOrigin(id) {
 async function create(id, url) {
     try {
         const newRecord = await Data.create({ id, url });
+        // Add the new URL to the cache
+        cache.set(id, url);
         return newRecord.id;
     } catch (err) {
         throw new Error(err.message);
