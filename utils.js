@@ -60,7 +60,38 @@ async function shortUrl(url) {
     }
 }
 
+async function deleteUrl(id) {
+    try {
+        // Remove the URL from the database
+        const result = await Data.destroy({ where: { id: id } });
+        
+        if (result) {
+            // If the URL was successfully deleted from the database, remove it from the cache
+            cache.del(id);
+            return true;
+        } else {
+            return false; // URL not found in the database
+        }
+    } catch (err) {
+        throw new Error(err.message);
+    }
+}
+
+async function getAllUrls() {
+    try {
+        const records = await Data.findAll();
+        return records.map(record => ({
+            id: record.id,
+            url: record.url
+        }));
+    } catch (err) {
+        throw new Error(err.message);
+    }
+}
+
 module.exports = {
     findOrigin,
-    shortUrl
+    shortUrl,
+    deleteUrl,
+    getAllUrls
 };
