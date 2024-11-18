@@ -7,7 +7,8 @@ const sequelize = new Sequelize({
 const Data = sequelize.define('Data', {
     id: {
         type: DataTypes.STRING,
-        primaryKey: true
+        primaryKey: true,
+        allowNull: false
     },
     url: {
         type: DataTypes.STRING,

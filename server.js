@@ -3,6 +3,8 @@ const lib = require('./utils')
 const app = express()
 const port = 3000
 
+app.use(express.json());
+
 app.get('/short/:id', async (req, res) => {
     try {
         const id = req.params.id;
@@ -50,6 +52,40 @@ app.get('/urls', async (req, res) => {
         res.json(urls);
     } catch (err) {
         res.status(500).send(err.message);
+    }
+});
+
+app.post('/bulk-create', async (req, res) => {
+    try {
+        // Expect an array of URLs in the request body
+        const urls = req.body.urls;
+        
+        // Validate input
+        if (!Array.isArray(urls)) {
+            return res.status(400).json({
+                error: 'Request body must contain a "urls" array'
+            });
+        }
+        
+        if (urls.length === 0) {
+            return res.status(400).json({
+                error: 'URLs array cannot be empty'
+            });
+        }
+        
+        // Call the bulkCreate function
+        const shortIds = await lib.bulkCreate(urls);
+        
+        res.json({
+            success: true,
+            shortIds: shortIds
+        });
+
+    } catch (err) {
+        console.error('Bulk creation error:', err);
+        res.status(500).json({
+            error: err.message || 'Failed to create short URLs'
+        });
     }
 });
 

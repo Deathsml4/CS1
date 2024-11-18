@@ -1,18 +1,16 @@
 const Data = require('./models/data');
 
 const NodeCache = require('node-cache');
-const cache = new NodeCache();
+
+// Configure cache with TTL of 1 hour and check period of 2 hours
+const cache = new NodeCache({ stdTTL: 3600, checkperiod: 7200 });
 
 function makeID(length) {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const charactersLength = characters.length;
-    let counter = 0;
-    while (counter < length) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        counter += 1;
-    }
-    return result;
+    // Use a more efficient method for ID generation
+    return Buffer.from(Math.random().toString(36) + 
+           Math.random().toString(36))
+           .toString('base64')
+           .slice(0, length);
 }
 
 async function findOrigin(id) {
@@ -34,7 +32,8 @@ async function findOrigin(id) {
 
         return url;
     } catch (err) {
-        throw new Error(err.message);
+        console.error(`Error finding URL for ID ${id}:`, err);
+        throw new Error('Failed to retrieve URL');
     }
 }
 
@@ -49,13 +48,19 @@ async function create(id, url) {
     }
 }
 
-async function shortUrl(url) {
-    while (true) {
-        let newID = makeID(5);
-        let originUrl = await findOrigin(newID);
-        if (!originUrl) {
-            await create(newID, url);
-            return newID;
+async function shortUrl(url, maxRetries = 3) {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        const newID = makeID(5);
+        try {
+            const originUrl = await findOrigin(newID);
+            if (!originUrl) {
+                await create(newID, url);
+                return newID;
+            }
+        } catch (err) {
+            if (attempt === maxRetries - 1) {
+                throw new Error('Failed to generate unique short URL');
+            }
         }
     }
 }
@@ -89,9 +94,31 @@ async function getAllUrls() {
     }
 }
 
+async function bulkCreate(urls) {
+    try {
+        const records = urls.map(url => ({
+            id: makeID(5),
+            url
+        }));
+        
+        const created = await Data.bulkCreate(records, {
+            updateOnDuplicate: ['url']
+        });
+        
+        // Update cache for all created records
+        created.forEach(record => cache.set(record.id, record.url));
+        
+        return created.map(record => record.id);
+    } catch (err) {
+        console.error('Bulk creation error:', err);
+        throw new Error('Failed to create short URLs in bulk');
+    }
+}
+
 module.exports = {
     findOrigin,
     shortUrl,
     deleteUrl,
-    getAllUrls
+    getAllUrls,
+    bulkCreate
 };
