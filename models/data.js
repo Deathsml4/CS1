@@ -1,4 +1,16 @@
 const { Sequelize, DataTypes } = require('sequelize');
+/* mySql deployment
+
+const sequelize = new Sequelize({
+    dialect: 'mysql',
+    host: 'localhost',
+    username: 'your_username',
+    password: 'your_password',
+    database: 'your_database'
+});
+
+*/
+
 const sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: './db/app.db'

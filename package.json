@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.21.0",
+    "express-rate-limit": "^7.4.1",
     "node-cache": "^5.1.2",
     "sequelize": "^6.37.3",
     "sqlite3": "^5.1.7"

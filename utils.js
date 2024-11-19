@@ -18,6 +18,7 @@ async function findOrigin(id) {
         // Check if the URL is in the cache
         const cachedUrl = cache.get(id);
         if (cachedUrl) {
+            console.log(`Cache hit for ID ${id}`);
             return cachedUrl; // Return the URL from the cache
         }
 

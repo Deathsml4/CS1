@@ -1,9 +1,32 @@
 const express = require('express')
 const lib = require('./utils')
+const rateLimit = require('express-rate-limit')
 const app = express()
 const port = 3000
 
 app.use(express.json());
+
+// Add rate limiters
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100 // limit each IP to 100 requests per windowMs
+});
+
+const createLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 10 // limit each IP to 10 URL creations per hour
+});
+
+const bulkCreateLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 10, // limit each IP to 10 bulk creations per hour
+    message: {
+        error: 'Too many bulk creation requests, please try again later'
+    }
+});
+
+// Apply general rate limiting to all requests
+app.use(generalLimiter);
 
 app.get('/short/:id', async (req, res) => {
     try {
@@ -20,7 +43,7 @@ app.get('/short/:id', async (req, res) => {
     }
 })
 
-app.post('/create', async (req, res) => {
+app.post('/create', createLimiter, async (req, res) => {
     try {
         const url = req.query.url;
         const newID = await lib.shortUrl(url);
@@ -55,7 +78,7 @@ app.get('/urls', async (req, res) => {
     }
 });
 
-app.post('/bulk-create', async (req, res) => {
+app.post('/bulk-create', bulkCreateLimiter, async (req, res) => {
     try {
         // Expect an array of URLs in the request body
         const urls = req.body.urls;
