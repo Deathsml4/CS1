@@ -25,6 +25,11 @@ const bulkCreateLimiter = rateLimit({
     }
 });
 
+const bulkDeleteLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 10, // limit each IP to 10 bulk deletions per hour
+});
+
 // Apply general rate limiting to all requests
 app.use(generalLimiter);
 
@@ -108,6 +113,41 @@ app.post('/bulk-create', bulkCreateLimiter, async (req, res) => {
         console.error('Bulk creation error:', err);
         res.status(500).json({
             error: err.message || 'Failed to create short URLs'
+        });
+    }
+});
+
+app.delete('/bulk-delete', bulkDeleteLimiter, async (req, res) => {
+    try {
+        // Expect an array of IDs in the request body
+        const ids = req.body.ids;
+        
+        // Validate input
+        if (!Array.isArray(ids)) {
+            return res.status(400).json({
+                error: 'Request body must contain an "ids" array'
+            });
+        }
+        
+        if (ids.length === 0) {
+            return res.status(400).json({
+                error: 'IDs array cannot be empty'
+            });
+        }
+        
+        // Call the bulkDelete function
+        const deletedCount = await lib.bulkDelete(ids);
+        
+        res.json({
+            success: true,
+            deletedCount: deletedCount,
+            message: `Successfully deleted ${deletedCount} URLs`
+        });
+
+    } catch (err) {
+        console.error('Bulk deletion error:', err);
+        res.status(500).json({
+            error: err.message || 'Failed to delete URLs'
         });
     }
 });

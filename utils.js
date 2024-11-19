@@ -116,10 +116,30 @@ async function bulkCreate(urls) {
     }
 }
 
+async function bulkDelete(ids) {
+    try {
+        // Remove the URLs from the database
+        const result = await Data.destroy({ 
+            where: { 
+                id: ids 
+            } 
+        });
+        
+        // Remove all deleted URLs from the cache
+        ids.forEach(id => cache.del(id));
+        
+        return result; // Returns number of records deleted
+    } catch (err) {
+        console.error('Bulk deletion error:', err);
+        throw new Error('Failed to delete URLs in bulk');
+    }
+}
+
 module.exports = {
     findOrigin,
     shortUrl,
     deleteUrl,
     getAllUrls,
-    bulkCreate
+    bulkCreate,
+    bulkDelete
 };

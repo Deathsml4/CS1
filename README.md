@@ -18,8 +18,79 @@ $ npm start
 | /create?url= | POST | Trả về ID được thu gọn
 | /delete/:id | DELETE | Xóa link
 | /bulk-create | POST | Tạo nhiều link với cùng một đường dẫn
+| /bulk-delete | DELETE | Xóa nhiều link cùng lúc
+| /getAllUrls  | GET |  Trả về tất cả các Urls
+
+
+
 
 ## Công nghệ sử dụng
-Sử dụng `Sequelize` để tạo database và ORM.
-Sử dụng `node-cache` để cache link.
-Sử dụng `express-rate-limit` để giới hạn số lượng request.
+
+### Sử dụng `Sequelize` để tạo database và ORM.
+
+SQLite 
+
+Có thể dùng MySql server trong các trường hợp database lớn hơn
+
+### Sử dụng `node-cache` để cache link.
+
+node-cache là một in-memory data store, rất hữu ích cho việc caching các kết quả truy vấn Bằng cách sử dụng node-cache, bạn có thể giảm thiểu số lần truy vấn tới cơ sở dữ liệu cho những ID được yêu cầu thường xuyên.
+
+**Cách áp dụng:**
+
+- Trước khi truy vấn đến cơ sở dữ liệu, kiểm tra trong cache xem URL tương ứng đã được lưu trữ chưa.
+- Nếu đã có trong cache, trả về URL mà không cần truy vấn đến cơ sở dữ liệu.
+- Nếu không có, truy vấn cơ sở dữ liệu và lưu kết quả vào cache cho lần truy vấn tiếp theo.
+
+### Sử dụng `express-rate-limit` để giới hạn số lượng request.
+
+Để tránh quá tải hệ thống, bạn có thể áp dụng kỹ thuật rate limiting để giới hạn số lượng request mà một người dùng có thể thực hiện trong một khoảng thời gian nhất định.
+
+Ví dụ, dùng thư viện `express-rate-limit` để giới hạn số request đến `/create` và `/bulk-create`, `/bulk-delete`.
+
+**Lợi ích:**
+
+- Bảo vệ hệ thống: Ngăn chặn DDoS và bảo vệ hệ thống khỏi những người dùng có hành vi bất thường.
+- Tối ưu hiệu suất: Giảm tải hệ thống trong trường hợp có quá nhiều request.
+
+## Tối Ưu 
+
+**Cấu hình Cache:**
+
+- Thêm TTL và chu kỳ kiểm tra để tự động xóa các mục cache cũ.
+makeID():
+
+- Cải thiện việc tạo ID bằng cách sử dụng Buffer và mã hóa base64, hiệu quả hơn so với vòng lặp ký tự.
+
+**findOrigin():**
+
+
+- Cải thiện xử lý lỗi với các thông báo có ý nghĩa hơn.
+
+**shortUrl():**
+
+- Thêm cơ chế thử lại với tham số maxRetries.
+- Cải thiện xử lý lỗi.
+- Kiểm tra xung đột ID hiệu quả hơn.
+
+**bulkCreate():**
+
+- Thêm hỗ trợ thao tác hàng loạt để tạo nhiều URL cùng lúc.
+- Bao gồm cập nhật cache cho các thao tác hàng loạt.
+- Xử lý các mục trùng lặp với tùy chọn updateOnDuplicate
+
+**bulkDelete():**
+
+- Thêm hỗ trợ thao tác hàng loạt để xóa nhiều URL cùng lúc.
+- Bao gồm cập nhật cache cho các thao tác hàng loạt.
+
+**getAllUrls()**
+
+- Thêm hỗ trợ thao tác hiển thị tất cả URL cùng lúc.
+
+**Xử lý lỗi:**
+
+- Thêm các thông báo lỗi cụ thể hơn.
+- Bao gồm ghi log lỗi.
+
+
