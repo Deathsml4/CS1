@@ -37,7 +37,13 @@ Có thể dùng MySql server trong các trường hợp database lớn hơn
 
 node-cache là một in-memory data store, rất hữu ích cho việc caching các kết quả truy vấn Bằng cách sử dụng node-cache, bạn có thể giảm thiểu số lần truy vấn tới cơ sở dữ liệu cho những ID được yêu cầu thường xuyên.
 
-### Sử dụng Load Balancing và Clustering
+**Cách áp dụng:**
+
+- Trước khi truy vấn đến cơ sở dữ liệu, kiểm tra trong cache xem URL tương ứng đã được lưu trữ chưa.
+- Nếu đã có trong cache, trả về URL mà không cần truy vấn đến cơ sở dữ liệu.
+- Nếu không có, truy vấn cơ sở dữ liệu và lưu kết quả vào cache cho lần truy vấn tiếp theo.
+
+### Sử dụng `Load Balancing` và `Clustering`
 
 Nếu ứng dụng cần phục vụ nhiều người dùng đồng thời, việc sử dụng các kỹ thuật load balancing và clustering sẽ giúp phân phối tải đều hơn và tận dụng tối đa tài nguyên hệ thống.
 
@@ -45,11 +51,7 @@ Load balancing sẽ giúp phân phối các yêu cầu tới nhiều instance c�
 
 Clustering trong Node.js cho phép chạy nhiều instance của ứng dụng trên các CPU khác nhau.
 
-**Cách áp dụng:**
 
-- Trước khi truy vấn đến cơ sở dữ liệu, kiểm tra trong cache xem URL tương ứng đã được lưu trữ chưa.
-- Nếu đã có trong cache, trả về URL mà không cần truy vấn đến cơ sở dữ liệu.
-- Nếu không có, truy vấn cơ sở dữ liệu và lưu kết quả vào cache cho lần truy vấn tiếp theo.
 
 ### Sử dụng `express-rate-limit` để giới hạn số lượng request.
 
