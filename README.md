@@ -20,6 +20,7 @@ $ npm start
 | /bulk-create | POST | Tạo nhiều link với cùng một đường dẫn
 | /bulk-delete | DELETE | Xóa nhiều link cùng lúc
 | /getAllUrls  | GET |  Trả về tất cả các Urls
+| /cache-status  | GET |  Trả về tất cả các Urls và trạng thái cache
 
 
 
@@ -35,6 +36,14 @@ Có thể dùng MySql server trong các trường hợp database lớn hơn
 ### Sử dụng `node-cache` để cache link.
 
 node-cache là một in-memory data store, rất hữu ích cho việc caching các kết quả truy vấn Bằng cách sử dụng node-cache, bạn có thể giảm thiểu số lần truy vấn tới cơ sở dữ liệu cho những ID được yêu cầu thường xuyên.
+
+### Sử dụng Load Balancing và Clustering
+
+Nếu ứng dụng cần phục vụ nhiều người dùng đồng thời, việc sử dụng các kỹ thuật load balancing và clustering sẽ giúp phân phối tải đều hơn và tận dụng tối đa tài nguyên hệ thống.
+
+Load balancing sẽ giúp phân phối các yêu cầu tới nhiều instance của ứng dụng. Bạn có thể sử dụng Nginx hoặc HAProxy để điều phối yêu cầu.
+
+Clustering trong Node.js cho phép chạy nhiều instance của ứng dụng trên các CPU khác nhau.
 
 **Cách áp dụng:**
 
@@ -62,6 +71,10 @@ makeID():
 
 - Cải thiện việc tạo ID bằng cách sử dụng Buffer và mã hóa base64, hiệu quả hơn so với vòng lặp ký tự.
 
+**makeID():**
+
+- Cải thiện việc tạo ID bằng cách sử dụng hash để tạo ra một ID duy nhất cho mỗi URL.
+
 **findOrigin():**
 
 
@@ -88,9 +101,11 @@ makeID():
 
 - Thêm hỗ trợ thao tác hiển thị tất cả URL cùng lúc.
 
+**cache-status**
+
+- Thêm hỗ trợ thao tác hiển thị tất cả URL cùng lúc và trạng thái cache.
+
 **Xử lý lỗi:**
 
 - Thêm các thông báo lỗi cụ thể hơn.
 - Bao gồm ghi log lỗi.
-
-

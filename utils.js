@@ -1,16 +1,18 @@
 const Data = require('./models/data');
-
+const crypto = require('crypto');
 const NodeCache = require('node-cache');
 
 // Configure cache with TTL of 1 hour and check period of 2 hours
 const cache = new NodeCache({ stdTTL: 3600, checkperiod: 7200 });
 
-function makeID(length) {
-    // Use a more efficient method for ID generation
-    return Buffer.from(Math.random().toString(36) + 
-           Math.random().toString(36))
-           .toString('base64')
-           .slice(0, length);
+function makeID(url) {
+    // Create a hash of the URL
+    const hash = crypto.createHash('sha256')
+        .update(url)
+        .digest('base64')
+        .replace(/[+/=]/g, '') // Remove +, / and = characters
+        .slice(0, 5);          // Take first 5 characters
+    return hash;
 }
 
 async function findOrigin(id) {
@@ -49,20 +51,23 @@ async function create(id, url) {
     }
 }
 
-async function shortUrl(url, maxRetries = 3) {
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-        const newID = makeID(5);
-        try {
-            const originUrl = await findOrigin(newID);
-            if (!originUrl) {
-                await create(newID, url);
-                return newID;
-            }
-        } catch (err) {
-            if (attempt === maxRetries - 1) {
-                throw new Error('Failed to generate unique short URL');
-            }
+async function shortUrl(url) {
+    try {
+        const newID = makeID(url);
+        // Check if URL already exists
+        const existingUrl = await findOrigin(newID);
+        if (existingUrl === url) {
+            // If the same URL was already shortened, return existing ID
+            return newID;
+        } else if (existingUrl) {
+            // If ID collision with different URL, throw error
+            throw new Error('Hash collision detected');
         }
+        // Create new record
+        await create(newID, url);
+        return newID;
+    } catch (err) {
+        throw new Error(`Failed to create short URL: ${err.message}`);
     }
 }
 
@@ -98,7 +103,7 @@ async function getAllUrls() {
 async function bulkCreate(urls) {
     try {
         const records = urls.map(url => ({
-            id: makeID(5),
+            id: makeID(url),
             url
         }));
         
@@ -141,5 +146,6 @@ module.exports = {
     deleteUrl,
     getAllUrls,
     bulkCreate,
-    bulkDelete
+    bulkDelete,
+    cache
 };
